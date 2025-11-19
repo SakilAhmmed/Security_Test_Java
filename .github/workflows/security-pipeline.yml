@@ -1,4 +1,4 @@
-name: Security Pipeline (Java Maven)
+name: Java Maven Security Pipeline
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
           sarif_file: gitleaks.sarif
 
       ##############################
-      # 3️⃣ SAST Scanning (Semgrep)
+      # 3️⃣ SAST Scanning (Semgrep for Java)
       ##############################
       - name: Setup Python (for Semgrep)
         uses: actions/setup-python@v5
@@ -41,7 +41,7 @@ jobs:
       - name: Install Semgrep
         run: pip install semgrep
 
-      - name: Run Semgrep (Java SAST)
+      - name: Run Semgrep (Java rules)
         run: semgrep scan --config=p/java --sarif --output semgrep.sarif
 
       - name: Upload Semgrep SARIF
@@ -50,7 +50,7 @@ jobs:
           sarif_file: semgrep.sarif
 
       ##############################
-      # 4️⃣ Quick Dependency Scan (Trivy)
+      # 4️⃣ Quick Maven Dependency Scan (Trivy)
       ##############################
       - name: Install Trivy
         run: |
@@ -79,7 +79,7 @@ jobs:
       - name: Run Dependency-Check (Maven)
         run: |
           ./dependency-check/bin/dependency-check.sh \
-            --project "Java Maven Project" \
+            --project "Spring Boot Maven Project" \
             --scan . \
             --format SARIF \
             --out ./dependency-check-report || true
