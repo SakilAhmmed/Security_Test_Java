@@ -1,4 +1,7 @@
 name: Java Maven Security Pipeline
+permissions:
+  contents: read
+  security-events: write
 
 on:
   push:
@@ -32,7 +35,7 @@ jobs:
         run: trivy fs . --scanners vuln --dependency-file pom.xml --format sarif --output trivy.sarif || true
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy.sarif
 
