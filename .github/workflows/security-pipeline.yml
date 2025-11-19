@@ -1,4 +1,4 @@
-name: Java Maven Security Pipeline (CLI Full Scan)
+name: Java Maven Security Pipeline
 
 on:
   push:
@@ -17,10 +17,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-     
+    
 
       ##############################
-      # 5️⃣ Quick Dependency Scan (Trivy)
+      # 4️⃣ Quick Maven Dependency Scan (Trivy)
       ##############################
       - name: Install Trivy
         run: |
@@ -29,8 +29,8 @@ jobs:
           wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.0_Linux-64bit.deb
           sudo dpkg -i trivy_0.51.0_Linux-64bit.deb
 
-      - name: Run Trivy (Maven dependencies)
-        run: trivy fs target/dependency --scanners vuln --format sarif --output trivy.sarif || true
+      - name: Run Trivy (Maven Dependency Scan)
+        run: trivy fs . --scanners vuln --dependency-file pom.xml --format sarif --output trivy.sarif || true
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
@@ -38,7 +38,7 @@ jobs:
           sarif_file: trivy.sarif
 
       ##############################
-      # 6️⃣ Deep Maven Dependency Scan (Dependency-Check CLI)
+      # 5️⃣ Deep Maven Dependency Scan (OWASP Dependency-Check)
       ##############################
       - name: Install OWASP Dependency-Check
         run: |
@@ -46,19 +46,19 @@ jobs:
           unzip dependency-check.zip -d dependency-check
           chmod +x dependency-check/bin/dependency-check.sh
 
-      - name: Run Dependency-Check CLI (full scan)
+      - name: Run Dependency-Check (Maven)
         run: |
           ./dependency-check/bin/dependency-check.sh \
-            --project "spring-boot-firstapplication" \
-            --scan target/dependency \
+            --project "Spring Boot Maven Project" \
+            --scan . \
             --format SARIF \
-            --out ./dependency-check-report \
-            --enableExperimental || true
+            --out ./dependency-check-report || true
 
       - name: Upload Dependency-Check SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ./dependency-check-report/dependency-check-report.sarif
+
       ##############################
       # 2️⃣ Secret Scanning (Gitleaks)
       ##############################
@@ -90,12 +90,3 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
-
-      ##############################
-      # 4️⃣ Build Maven Project & Resolve Dependencies
-      ##############################
-      - name: Build Maven project
-        run: mvn clean install -DskipTests
-
-      - name: Copy dependencies to target folder
-        run: mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
