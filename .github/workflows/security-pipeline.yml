@@ -30,10 +30,10 @@ jobs:
           args: detect --source . --report-format sarif --report-path gitleaks.sarif
 
       - name: Upload Gitleaks SARIF
-        if: ${{ always() && github.event_name != 'pull_request' }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: gitleaks.sarif
+        continue-on-error: true
 
       ##############################
       # 3️⃣ SAST Scanning (Semgrep for Java)
@@ -50,10 +50,10 @@ jobs:
         run: semgrep scan --config=p/java --sarif --output semgrep.sarif
 
       - name: Upload Semgrep SARIF
-        if: ${{ always() && github.event_name != 'pull_request' }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: semgrep.sarif
+        continue-on-error: true
 
       ##############################
       # 4️⃣ Build Maven Project & Copy Dependencies
@@ -77,10 +77,10 @@ jobs:
         run: trivy fs target/dependency --scanners vuln --format sarif --output trivy.sarif || true
 
       - name: Upload Trivy SARIF
-        if: ${{ always() && github.event_name != 'pull_request' && -f trivy.sarif }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy.sarif
+        continue-on-error: true
 
       ##############################
       # 6️⃣ OWASP Dependency-Check CLI (Full Scan)
@@ -101,7 +101,7 @@ jobs:
             --enableExperimental || true
 
       - name: Upload Dependency-Check SARIF
-        if: ${{ always() && github.event_name != 'pull_request' && -f ./dependency-check-report/dependency-check-report.sarif }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ./dependency-check-report/dependency-check-report.sarif
+        continue-on-error: true
