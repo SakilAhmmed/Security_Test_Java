@@ -40,20 +40,27 @@ jobs:
       ##############################
       # 5️⃣ Deep Maven Dependency Scan (OWASP Dependency-Check)
       ##############################
+      - name: Build Maven project
+        run: mvn clean install -DskipTests
+      
+      - name: Copy dependencies
+        run: mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
+      
       - name: Install OWASP Dependency-Check
         run: |
           curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v8.0.2/dependency-check-8.0.2-release.zip -o dependency-check.zip
           unzip dependency-check.zip -d dependency-check
           chmod +x dependency-check/bin/dependency-check.sh
-
-      - name: Run Dependency-Check (Maven)
+      
+      - name: Run Dependency-Check CLI (full scan)
         run: |
           ./dependency-check/bin/dependency-check.sh \
-            --project "Spring Boot Maven Project" \
-            --scan . \
+            --project "spring-boot-firstapplication" \
+            --scan target/dependency \
             --format SARIF \
-            --out ./dependency-check-report || true
-
+            --out ./dependency-check-report \
+            --enableExperimental || true
+      
       - name: Upload Dependency-Check SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
