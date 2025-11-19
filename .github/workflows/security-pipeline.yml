@@ -1,0 +1,65 @@
+name: Security Pipeline (Gitleaks + Semgrep + Trivy)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  security-checks:
+    name: Security Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      ############################################
+      ## SECRET SCANNING - GITLEAKS
+      ############################################
+      - name: Run Gitleaks (Secret Scanning)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source . --report-format sarif --report-path gitleaks.sarif
+
+      - name: Upload Gitleaks report to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks.sarif
+
+      ############################################
+      ## SAST SCANNING - SEMGREP
+      ############################################
+      - name: Setup Python (required for Semgrep)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep (SAST)
+        run: semgrep scan --config=auto --sarif --output semgrep.sarif
+
+      - name: Upload Semgrep results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+      ############################################
+      ## SCA / DEPENDENCY SCAN - TRIVY
+      ############################################
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.51.0_Linux-64bit.deb
+
+      - name: Run Trivy (Dependency Vulnerabilities)
+        run: trivy fs . --format sarif --output trivy.sarif || true
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
