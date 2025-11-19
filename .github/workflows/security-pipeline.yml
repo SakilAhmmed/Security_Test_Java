@@ -17,46 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      ##############################
-      # 2️⃣ Secret Scanning (Gitleaks)
-      ##############################
-      - name: Run Gitleaks (Secret Scan)
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          args: detect --source . --report-format sarif --report-path gitleaks.sarif
-
-      - name: Upload Gitleaks SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: gitleaks.sarif
-
-      ##############################
-      # 3️⃣ SAST Scanning (Semgrep for Java)
-      ##############################
-      - name: Setup Python (for Semgrep)
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Install Semgrep
-        run: pip install semgrep
-
-      - name: Run Semgrep (Java rules)
-        run: semgrep scan --config=p/java --sarif --output semgrep.sarif
-
-      - name: Upload Semgrep SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: semgrep.sarif
-
-      ##############################
-      # 4️⃣ Build Maven Project & Resolve Dependencies
-      ##############################
-      - name: Build Maven project
-        run: mvn clean install -DskipTests
-
-      - name: Copy dependencies to target folder
-        run: mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
+     
 
       ##############################
       # 5️⃣ Quick Dependency Scan (Trivy)
@@ -98,3 +59,43 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ./dependency-check-report/dependency-check-report.sarif
+      ##############################
+      # 2️⃣ Secret Scanning (Gitleaks)
+      ##############################
+      - name: Run Gitleaks (Secret Scan)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source . --report-format sarif --report-path gitleaks.sarif
+
+      - name: Upload Gitleaks SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks.sarif
+
+      ##############################
+      # 3️⃣ SAST Scanning (Semgrep for Java)
+      ##############################
+      - name: Setup Python (for Semgrep)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep (Java rules)
+        run: semgrep scan --config=p/java --sarif --output semgrep.sarif
+
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+      ##############################
+      # 4️⃣ Build Maven Project & Resolve Dependencies
+      ##############################
+      - name: Build Maven project
+        run: mvn clean install -DskipTests
+
+      - name: Copy dependencies to target folder
+        run: mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
